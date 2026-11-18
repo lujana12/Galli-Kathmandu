@@ -71,6 +71,7 @@ export const UI_COPY: Record<
     styleOneLabel: string;
     styleTwoLabel: string;
     navigateToSiteGps: (siteName: string) => string;
+    usingManualSorakhutteMsg: string;
   }
 > = {
   en: {
@@ -151,6 +152,8 @@ export const UI_COPY: Record<
     styleOneLabel: 'Style 1',
     styleTwoLabel: 'Style 2',
     navigateToSiteGps: (siteName) => `Navigate to ${siteName} (GPS)`,
+    usingManualSorakhutteMsg:
+      'Live GPS unavailable · Showing route from Sorakhutte Chowk. Click map or tap "Use My GPS" to change start.',
   },
   ne: {
     appTitle: 'काठमाडौं गल्ली',
@@ -230,6 +233,8 @@ export const UI_COPY: Record<
     styleOneLabel: 'शैली १',
     styleTwoLabel: 'शैली २',
     navigateToSiteGps: (siteName) => `${siteName} जीपीएस नेभिगेसन`,
+    usingManualSorakhutteMsg:
+      'प्रत्यक्ष जीपीएस उपलब्ध नभएकोले सोह्रखुट्टे चोकबाट बाटो देखाइएको छ। सुरु स्थान बदल्न नक्सामा क्लिक गर्नुहोस्।',
   },
 };
 

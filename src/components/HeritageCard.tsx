@@ -111,8 +111,8 @@ export const HeritageCard: React.FC<HeritageCardProps> = ({
         </div>
       </div>
 
-      {/* Heritage information & direct Real-World Map navigation */}
-      <div className="p-4 sm:p-5 overflow-y-auto space-y-3">
+      {/* Heritage information */}
+      <div className="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1 min-h-0">
         <div className="flex items-center justify-between gap-2 text-xs text-[#6B5038]">
           <div className="flex items-center gap-1.5 font-medium">
             <span className="font-mono-tabular">0{location.order}</span>
@@ -171,37 +171,37 @@ export const HeritageCard: React.FC<HeritageCardProps> = ({
             </button>
           </div>
         )}
+      </div>
 
-        {/* Action Buttons right below discovered info */}
-        <div className="pt-2 flex flex-col sm:flex-row gap-2">
-          {!isPlayerInside ? (
-            <button
-              type="button"
-              onClick={() => onWalkToSite(location)}
-              className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#8D2C1D] hover:bg-[#752316] text-[#FAF3E8] text-xs font-semibold transition-colors whitespace-nowrap"
-            >
-              <Footprints className="w-4 h-4" />
-              <span>{copy.walkHere}</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-[#8D6F4E] text-[#2B1D14] hover:bg-[#E7DAC4] text-xs font-semibold transition-colors whitespace-nowrap"
-            >
-              <span>{copy.continueExploring}</span>
-            </button>
-          )}
-
+      {/* Pinned Action Buttons always visible below discovered info */}
+      <div className="px-4 py-3 sm:px-5 border-t border-[#D8C6AB] bg-[#EFE4D1] shrink-0 flex flex-col sm:flex-row gap-2">
+        {!isPlayerInside ? (
           <button
             type="button"
-            onClick={() => onNavigateRealWorld(location.gpsDestinationId)}
-            className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#274B37] hover:bg-[#1E3B2B] text-[#F5EFE4] text-xs font-semibold transition-colors whitespace-nowrap"
+            onClick={() => onWalkToSite(location)}
+            className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-3.5 rounded-xl bg-[#8D2C1D] hover:bg-[#752316] text-[#FAF3E8] text-xs font-semibold transition-colors whitespace-nowrap"
           >
-            <Navigation className="w-3.5 h-3.5 text-[#E5C178]" />
-            <span>{copy.navigateOnRealMap}</span>
+            <Footprints className="w-4 h-4 shrink-0" />
+            <span>{copy.walkHere}</span>
           </button>
-        </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-3.5 rounded-xl border border-[#8D6F4E] text-[#2B1D14] hover:bg-[#E7DAC4] text-xs font-semibold transition-colors whitespace-nowrap"
+          >
+            <span>{copy.continueExploring}</span>
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => onNavigateRealWorld(location.gpsDestinationId)}
+          className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-3.5 rounded-xl bg-[#274B37] hover:bg-[#1E3B2B] text-[#F5EFE4] text-xs font-semibold transition-colors whitespace-nowrap"
+        >
+          <Navigation className="w-3.5 h-3.5 text-[#E5C178] shrink-0" />
+          <span>{copy.navigateOnRealMap}</span>
+        </button>
       </div>
     </section>
   );

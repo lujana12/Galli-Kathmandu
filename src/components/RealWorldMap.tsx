@@ -111,6 +111,7 @@ export const RealWorldMap: React.FC<RealWorldMapProps> = ({
   const watchIdRef = useRef<number | null>(null);
   const lastRerouteTimeRef = useRef<number>(0);
   const autoStartTriggeredRef = useRef<boolean>(false);
+  const didInitialGpsRef = useRef<boolean>(false);
 
   const [selectedDestId, setSelectedDestId] = useState<string>(
     initialDestinationId || GPS_DESTINATIONS[0].id
@@ -173,7 +174,12 @@ export const RealWorldMap: React.FC<RealWorldMapProps> = ({
     userLayerRef.current = L.layerGroup().addTo(map);
     mapInstanceRef.current = map;
 
+    const sizeTimer = window.setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+
     return () => {
+      window.clearTimeout(sizeTimer);
       if (watchIdRef.current !== null && navigator.geolocation) {
         navigator.geolocation.clearWatch(watchIdRef.current);
       }
@@ -181,47 +187,6 @@ export const RealWorldMap: React.FC<RealWorldMapProps> = ({
       mapInstanceRef.current = null;
     };
   }, []);
-
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    const handleMapClick = (e: L.LeafletMouseEvent) => {
-      if (!manualPickMode && gpsStatus !== 'denied' && gpsStatus !== 'unavailable') {
-        return;
-      }
-      const picked = { lat: e.latlng.lat, lng: e.latlng.lng };
-      setUserPos(picked);
-      setIsManualStart(true);
-      setManualPickMode(false);
-      setGpsAccuracy(null);
-      setGpsError(null);
-    };
-
-    map.on('click', handleMapClick);
-    return () => {
-      map.off('click', handleMapClick);
-    };
-  }, [manualPickMode, gpsStatus]);
-
-  useEffect(() => {
-    const layer = markersLayerRef.current;
-    const map = mapInstanceRef.current;
-    if (!layer || !map) return;
-
-    layer.clearLayers();
-    GPS_DESTINATIONS.forEach((dest) => {
-      const marker = L.marker([dest.lat, dest.lng], {
-        icon: createMarkerIcon(dest.routeOrder, dest.id === selectedDestId),
-      });
-      marker.on('click', () => {
-        setSelectedDestId(dest.id);
-        setArrived(false);
-        map.panTo([dest.lat, dest.lng], { animate: true });
-      });
-      marker.addTo(layer);
-    });
-  }, [selectedDestId]);
 
   useEffect(() => {
     const layer = userLayerRef.current;
@@ -295,6 +260,28 @@ export const RealWorldMap: React.FC<RealWorldMapProps> = ({
     [copy.rerouteMsg]
   );
 
+  useEffect(() => {
+    const layer = markersLayerRef.current;
+    const map = mapInstanceRef.current;
+    if (!layer || !map) return;
+
+    layer.clearLayers();
+    GPS_DESTINATIONS.forEach((dest) => {
+      const marker = L.marker([dest.lat, dest.lng], {
+        icon: createMarkerIcon(dest.routeOrder, dest.id === selectedDestId),
+      });
+      marker.on('click', () => {
+        setSelectedDestId(dest.id);
+        setArrived(false);
+        map.panTo([dest.lat, dest.lng], { animate: true });
+        if (isNavigating && userPos) {
+          calculateAndShowRoute(userPos, dest, false);
+        }
+      });
+      marker.addTo(layer);
+    });
+  }, [calculateAndShowRoute, isNavigating, selectedDestId, userPos]);
+
   const requestGpsLocation = useCallback((): Promise<LatLng | null> => {
     return new Promise((resolve) => {
       if (!('geolocation' in navigator)) {
@@ -339,6 +326,8 @@ export const RealWorldMap: React.FC<RealWorldMapProps> = ({
   }, [copy.gpsDeniedMsg, copy.gpsUnavailableMsg, isNe]);
 
   useEffect(() => {
+    if (didInitialGpsRef.current) return;
+    didInitialGpsRef.current = true;
     requestGpsLocation();
   }, [requestGpsLocation]);
 
@@ -357,20 +346,26 @@ export const RealWorldMap: React.FC<RealWorldMapProps> = ({
     async (dest: GpsDestination = selectedDestination) => {
       setArrived(false);
       let startOrigin = userPos;
+      let usingFallbackManual = isManualStart;
 
       if (!startOrigin) {
         startOrigin = await requestGpsLocation();
       }
 
       if (!startOrigin) {
-        setManualPickMode(true);
-        return;
+        // Fallback to Sorakhutte Chowk manual Ward 16 start so genuine pedestrian routing always displays
+        startOrigin = { lat: 27.7176, lng: 85.3112 };
+        usingFallbackManual = true;
+        setUserPos(startOrigin);
+        setIsManualStart(true);
+        setManualPickMode(false);
+        setGpsError(copy.usingManualSorakhutteMsg);
       }
 
       setIsNavigating(true);
       await calculateAndShowRoute(startOrigin, dest, false);
 
-      if (!isManualStart && 'geolocation' in navigator) {
+      if (!usingFallbackManual && 'geolocation' in navigator) {
         if (watchIdRef.current !== null) {
           navigator.geolocation.clearWatch(watchIdRef.current);
         }
@@ -400,15 +395,62 @@ export const RealWorldMap: React.FC<RealWorldMapProps> = ({
         );
       }
     },
-    [calculateAndShowRoute, isManualStart, isNe, requestGpsLocation, selectedDestination, userPos]
+    [
+      calculateAndShowRoute,
+      copy.usingManualSorakhutteMsg,
+      isManualStart,
+      isNe,
+      requestGpsLocation,
+      selectedDestination,
+      userPos,
+    ]
   );
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    const handleMapClick = (e: L.LeafletMouseEvent) => {
+      if (
+        !manualPickMode &&
+        !isManualStart &&
+        gpsStatus !== 'denied' &&
+        gpsStatus !== 'unavailable'
+      ) {
+        return;
+      }
+      const picked = { lat: e.latlng.lat, lng: e.latlng.lng };
+      setUserPos(picked);
+      setIsManualStart(true);
+      setManualPickMode(false);
+      setGpsAccuracy(null);
+      setGpsError(null);
+      if (isNavigating) {
+        calculateAndShowRoute(picked, selectedDestination, false);
+      }
+    };
+
+    map.on('click', handleMapClick);
+    return () => {
+      map.off('click', handleMapClick);
+    };
+  }, [
+    calculateAndShowRoute,
+    gpsStatus,
+    isManualStart,
+    isNavigating,
+    manualPickMode,
+    selectedDestination,
+  ]);
 
   // Auto-start pedestrian navigation when opened directly from a specific site (e.g. Mhepi Ajima)
   useEffect(() => {
-    if (!autoStartNavigation || autoStartTriggeredRef.current || !userPos) return;
-    autoStartTriggeredRef.current = true;
-    handleStartNavigation(selectedDestination);
-  }, [autoStartNavigation, handleStartNavigation, selectedDestination, userPos]);
+    if (!autoStartNavigation || autoStartTriggeredRef.current) return;
+    if (userPos || gpsStatus === 'denied' || gpsStatus === 'unavailable') {
+      autoStartTriggeredRef.current = true;
+      handleStartNavigation(selectedDestination);
+    }
+  }, [autoStartNavigation, gpsStatus, handleStartNavigation, selectedDestination, userPos]);
 
   useEffect(() => {
     if (!isNavigating || isManualStart || !userPos || !activeRoute) return;
@@ -601,13 +643,13 @@ export const RealWorldMap: React.FC<RealWorldMapProps> = ({
               </div>
             </div>
 
-            <div className="px-3.5 py-2.5 bg-[#EFE4D1] flex items-center gap-2">
+            <div className="px-3.5 py-2.5 bg-[#EFE4D1] flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => onExploreInformation(selectedDestination.heritageIds[0])}
                 className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-[#8D6F4E] text-[#2B1D14] hover:bg-[#E5D6BC] text-xs font-semibold transition-colors whitespace-nowrap"
               >
-                <Info className="w-3.5 h-3.5 text-[#8D2C1D]" />
+                <Info className="w-3.5 h-3.5 text-[#8D2C1D] shrink-0" />
                 <span>{copy.exploreInfo}</span>
               </button>
 

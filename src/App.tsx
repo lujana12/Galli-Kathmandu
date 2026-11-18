@@ -469,6 +469,7 @@ export default function App() {
 
       const insideId = insideLoc?.id ?? null;
       if (insideId !== activeZoneRef.current) {
+        const prevInsideId = activeZoneRef.current;
         activeZoneRef.current = insideId;
         setActiveZoneLocationId(insideId);
 
@@ -500,7 +501,7 @@ export default function App() {
           });
         } else {
           suppressedProximityIdRef.current = null;
-          setSelectedCardId(null);
+          setSelectedCardId((prev) => (prev === prevInsideId ? null : prev));
           setNewlyDiscoveredId(null);
         }
       }
@@ -720,9 +721,9 @@ export default function App() {
           />
         </div>
 
-        {/* Middle-Right Floating Heritage Card */}
+        {/* Middle-Right Floating Heritage Card (non-overlapping layer) */}
         {cardLocation && (
-          <div className="my-auto flex justify-end">
+          <div className="pointer-events-none fixed inset-y-0 right-4 sm:right-5 z-50 flex items-center py-16">
             <HeritageCard
               lang={lang}
               location={cardLocation}
@@ -743,6 +744,7 @@ export default function App() {
               onSelectLocation={(loc) => {
                 setNewlyDiscoveredId(null);
                 setSelectedCardId(loc.id);
+                setLastVisitedLocationId(loc.id);
               }}
               onNavigateRealWorld={handleNavigateRealWorld}
             />
