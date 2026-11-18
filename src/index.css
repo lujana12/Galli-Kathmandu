@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #120d0a;
+    color: #f4ede2;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono-tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes gentle-pan {
+  0% {
+    transform: scale(1.03) translate3d(-0.8%, -0.4%, 0);
+  }
+  50% {
+    transform: scale(1.06) translate3d(0.8%, 0.4%, 0);
+  }
+  100% {
+    transform: scale(1.03) translate3d(-0.8%, -0.4%, 0);
+  }
+}
+
+@keyframes ember-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.9);
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.45;
+  }
+  75% {
+    opacity: 0.25;
+  }
+  100% {
+    transform: translate3d(18px, -70px, 0) scale(1.2);
+    opacity: 0;
+  }
+}
+
+.animate-gentle-pan {
+  animation: gentle-pan 26s ease-in-out infinite;
+}
+
+.animate-ember-drift {
+  animation: ember-drift 9s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-gentle-pan,
+  .animate-ember-drift {
+    animation: none !important;
+  }
+}

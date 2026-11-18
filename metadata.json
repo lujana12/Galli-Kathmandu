@@ -1,0 +1,6 @@
+{
+  "name": "Kathmandu Galli",
+  "description": "An atmospheric 2D point-and-click cultural exploration game through six historic Newari heritage sites in Ward 16, Kathmandu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
